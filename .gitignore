@@ -6,6 +6,3 @@ i386
 machine
 opt_global.h
 x86
-vm/
-dev.pid
-scripts/
