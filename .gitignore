@@ -6,3 +6,5 @@ i386
 machine
 opt_global.h
 x86
+.clangd
+freebsd-src/
