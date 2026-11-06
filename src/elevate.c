@@ -2,10 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-int
-main(void)
-{
-	setuid(11111);
+int main(void) {
+	setuid(1001);
 
 	if (getuid() != 0) {
 		fprintf(stderr,
@@ -17,5 +15,5 @@ main(void)
 	execl("/bin/sh", "/bin/sh", "-i", (char *)NULL);
 
 	perror("execl");
-	return (1);
+	return 1;
 }
