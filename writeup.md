@@ -1,18 +1,20 @@
 # R00TB33R
 
-All attempts at concealment are mentioned in each section below. 
+All attempts at concealment are mentioned in each section below.
 
 ## Installation
 
+The install script compile our kernel loadable modules (KLD) and load them using the `kldload` command. This install all hooked syscalls that implement escalation, keylogging and remote access logic. In the future we will make it conceal it's traces by removing logs from dmesg and /var/log/messages. It will also delete source files and potentially setup persistence by writing to /boot/loader.conf.
+
 ...
 
-## Privilige Escalation
+## Privilege Escalation
 
 ...
 
 ## Bonus Marks
 
-We plan to attempt two Bonus Marks in this assignment, that being the reverse shell and the keylogger. 
+We plan to attempt two Bonus Marks in this assignment, that being the reverse shell and the keylogger.
 
 ### Reverse Shell
 
