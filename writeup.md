@@ -12,7 +12,7 @@ To hide this from a detector, we traverse through FreeBSD's global list of loade
 
 ## Bonus Marks
 
-We plan to attempt two Bonus Marks in this assignment, that being the reverse shell and the keylogger.
+We plan to attempt two Bonus Marks in this assignment, that being the reverse shell and the keylogger. 
 
 ### Reverse Shell
 
