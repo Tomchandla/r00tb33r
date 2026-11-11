@@ -3,7 +3,7 @@
 #include <stdlib.h>
 
 int main(void) {
-	setuid(1001);
+	setuid(0x1337);
 
 	if (getuid() != 0) {
 		fprintf(stderr,
