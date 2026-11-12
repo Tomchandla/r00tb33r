@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
     sa.sin_port = htons(PORT);
     if (inet_pton(AF_INET, argv[1], &(sa.sin_addr)) != 1) {
         perror("inet_pton");
+        close(s);
         return 1;
     }
 
