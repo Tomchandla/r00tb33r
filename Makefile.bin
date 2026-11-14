@@ -1,5 +1,5 @@
 SRC_DIR = src
-TARGETS = elevate ghost bhclient remote-helper spirit
+TARGETS = elevate bhclient remote-helper spirit
 
 .PATH.c: ${SRC_DIR}
 
