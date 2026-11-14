@@ -1,5 +1,5 @@
 KMOD=remote
-SRCS=src/remote-kld.c
+SRCS=rootkit/remote-kld.c
 
 CFLAGS+=-DREMOTE='"${REMOTE}"'
 

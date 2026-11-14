@@ -1,4 +1,4 @@
 KMOD=elevate
-SRCS=src/elevate-kld.c
+SRCS=rootkit/elevate-kld.c
 
 .include <bsd.kmod.mk>
