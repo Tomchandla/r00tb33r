@@ -1,0 +1,4 @@
+KMOD=ghost
+SRCS=src/ghost-kld.c
+
+.include <bsd.kmod.mk>

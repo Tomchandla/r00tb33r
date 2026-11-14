@@ -1,0 +1,15 @@
+SRC_DIR := src
+TARGETS := elevate ghost
+
+all: $(TARGETS)
+
+elevate: $(SRC_DIR)/elevate.c
+	$(CC) $< -o elevate
+
+ghost: $(SRC_DIR)/ghost.c
+	$(CC) $< -o ghost
+
+clean:
+	rm -f $(TARGETS)
+
+.PHONY: all
