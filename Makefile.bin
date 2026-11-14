@@ -1,15 +1,16 @@
-SRC_DIR := src
-TARGETS := elevate ghost
+SRC_DIR = rootkit
+TARGETS = elevate bhclient remote-helper spirit
 
-all: $(TARGETS)
+.PATH.c: ${SRC_DIR}
 
-elevate: $(SRC_DIR)/elevate.c
-	$(CC) $< -o elevate
+.SUFFIXES: .c
 
-ghost: $(SRC_DIR)/ghost.c
-	$(CC) $< -o ghost
+all: ${TARGETS}
+
+.c:
+	${CC} ${.IMPSRC} -o ${.TARGET}
 
 clean:
-	rm -f $(TARGETS)
+	rm -f ${TARGETS}
 
-.PHONY: all
+.PHONY: all clean

