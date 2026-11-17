@@ -38,8 +38,6 @@ struct module {
     modspecific_t data; /* module specific data */
 };
 
-struct linker_file *old_linkers[256];
-struct module *old_modules[256];
 int linkers_index = 0, module_index = 0;
 char *klds[] = {"elevate", "remote", "ghost", "port_hiding"};
 
