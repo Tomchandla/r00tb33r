@@ -1,9 +1,12 @@
 SRC_DIR = detector
-TARGETS = checkcall
+TARGETS = checkcall check_icmp_hook
 
 all: ${TARGETS}
 
 checkcall: ${SRC_DIR}/checkcall.c
+	${CC} $< -lkvm -o ${.TARGET}
+
+check_icmp_hook: ${SRC_DIR}/check_icmp_hook.c
 	${CC} $< -lkvm -o ${.TARGET}
 
 clean:
