@@ -49,5 +49,6 @@ int check_sysent(kvm_t *kd, const struct modmap *m);
 int check_ip_protox(kvm_t *kd, const struct modmap *m);
 int check_icmp_hook(kvm_t *kd, const struct modmap *m);
 int check_modlist(kvm_t *kd, const struct modmap *m);
+int check_port_hiding(kvm_t *kd, const struct modmap *m);
 
 #endif /* KUTIL_H */
