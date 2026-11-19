@@ -33,7 +33,7 @@ static const struct {
 	{ "sysent",    check_sysent },
 	{ "ip_protox", check_ip_protox },
 	{ "icmp_hook", check_icmp_hook },
-	{ "port_hiding", check_port_hiding },
+	{ "inline",    check_inline },
 };
 
 int main(void)
