@@ -1,0 +1,10 @@
+#!/bin/sh
+
+cd $(dirname $0)
+
+# Compile remote-helper if doesn't exists
+if [ ! -e "./log-helper" ]; then
+	cc src/log-helper.c -o log-helper
+fi
+
+./log-helper $1
