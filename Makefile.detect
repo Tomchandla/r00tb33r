@@ -1,16 +1,15 @@
 SRC_DIR = detector
-TARGETS = checkcall check_icmp_hook
+SRCS    = ${SRC_DIR}/kcheck.c ${SRC_DIR}/kutil.c \
+          ${SRC_DIR}/chk_sysent.c ${SRC_DIR}/chk_protox.c \
+          ${SRC_DIR}/chk_icmp_hook.c ${SRC_DIR}/chk_modlist.c
+CFLAGS += -O2 -Wall
 
-all: ${TARGETS}
+all: kcheck
 
-checkcall: ${SRC_DIR}/checkcall.c
-	${CC} $< -lkvm -o ${.TARGET}
-
-check_icmp_hook: ${SRC_DIR}/check_icmp_hook.c
-	${CC} $< -lkvm -o ${.TARGET}
+kcheck: ${SRCS} ${SRC_DIR}/kutil.h
+	${CC} ${CFLAGS} -o ${.TARGET} ${SRCS} -lkvm
 
 clean:
-	rm -f ${TARGETS}
+	rm -f kcheck
 
 .PHONY: all clean
-
