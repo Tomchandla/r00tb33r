@@ -48,6 +48,10 @@ echo "[*] waiting for sshd..."
 until ssh "${SSH_OPTS[@]}" -p "$PORT" root@127.0.0.1 true 2>/dev/null; do sleep 1; done
 
 STATE="CLEAN"
+if [[ -n "${PRE_CMD:-}" ]]; then
+	echo "[*] preparing host state (PRE_CMD)..."
+	ssh "${SSH_OPTS[@]}" -p "$PORT" root@127.0.0.1 "$PRE_CMD" || echo "[!] PRE_CMD returned non-zero (continuing)"
+fi
 if [[ -n "$ROOTKIT_TAR" ]]; then
 	[[ -f "$ROOTKIT_TAR" ]] || { echo "rootkit tar not found: $ROOTKIT_TAR"; exit 2; }
 	STATE="INFECTED"
