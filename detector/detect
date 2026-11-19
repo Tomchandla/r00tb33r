@@ -1,0 +1,101 @@
+#!/bin/sh
+#
+# detect - r00tb33r rootkit detector (entrypoint)
+#
+# Exit 0 = no rootkit detected, exit 1 = rootkit detected.
+#
+# Strategy: a hard, low-false-positive kernel-memory engine (kcheck, libkvm)
+# decides the verdict; userland checks only corroborate / report so that clean
+# hosts never trip the -2 false-positive penalty.  All strategies run (no early
+# exit) so the printed report is complete; the exit code is the OR of the HARD
+# verdicts only.
+#
+set -u
+
+DIR=$(cd "$(dirname "$0")" && pwd)
+WORK=$(mktemp -d "${TMPDIR:-/tmp}/.detXXXXXX") || WORK="${TMPDIR:-/tmp}/.det$$"
+mkdir -p "$WORK" 2>/dev/null
+trap 'rm -rf "$WORK"' EXIT INT TERM
+
+ROOTKIT=0          # 1 => hard detection
+log()  { printf '%s\n' "$*"; }
+hit()  { ROOTKIT=1; printf '[DETECT] %s\n' "$*"; }
+info() { printf '[info]   %s\n' "$*"; }
+
+log "=== r00tb33r detector ==="
+log "host: $(hostname 2>/dev/null)  kernel: $(uname -r 2>/dev/null)"
+
+# ---------------------------------------------------------------------------
+# Strategy 1 (HARD): kernel function-pointer integrity via libkvm (kcheck)
+# ---------------------------------------------------------------------------
+BIN="$DIR/kcheck"
+if [ ! -x "$BIN" ]; then
+	if command -v cc >/dev/null 2>&1 && [ -f "$DIR/kcheck.c" ]; then
+		if cc -O2 -I"$DIR" -o "$WORK/kcheck" "$DIR/kcheck.c" "$DIR/kutil.c" \
+		    "$DIR"/chk_*.c -lkvm 2>"$WORK/cc.err"; then
+			BIN="$WORK/kcheck"
+		fi
+	fi
+fi
+
+KRC=2
+if [ -x "$BIN" ]; then
+	"$BIN"
+	KRC=$?
+else
+	log "[detect] kcheck could not be built:"
+	[ -s "$WORK/cc.err" ] && sed 's/^/    /' "$WORK/cc.err"
+fi
+
+case "$KRC" in
+	1) hit "kernel pointer integrity check found a rootkit" ;;
+	0) info "kernel pointer integrity: clean" ;;
+	*) info "kernel pointer integrity: ENGINE UNAVAILABLE (degraded mode)" ;;
+esac
+
+# ---------------------------------------------------------------------------
+# Strategy 2 (corroborating / report-only): userland artifacts
+# These NEVER flip the exit code on their own (clean hosts legitimately have
+# many of them); they add confidence and context to the report.
+# ---------------------------------------------------------------------------
+log "--- userland corroboration (report-only) ---"
+
+# 2a. Modules configured to auto-load that are staged outside the base kernel
+for d in /boot/modules; do
+	[ -d "$d" ] || continue
+	for ko in "$d"/*.ko; do
+		[ -e "$ko" ] || continue
+		info "module staged in $d: $(basename "$ko")"
+	done
+done
+
+# 2b. devd rules whose action spawns a program with a network/IP argument
+#     (our kit installs such a rule to trigger a reverse shell)
+for f in /etc/devd.conf /usr/local/etc/devd/*.conf; do
+	[ -f "$f" ] || continue
+	if grep -Eq 'action[[:space:]]*"[^"]*(sh|nc|bhclient)[^"]*"' "$f" 2>/dev/null; then
+		info "devd action spawns a shell/helper: $f"
+	fi
+done
+
+# 2c. kld_list entries in rc.conf (persistence) that are not base modules
+if command -v sysrc >/dev/null 2>&1; then
+	kl=$(sysrc -n kld_list 2>/dev/null)
+	[ -n "$kl" ] && info "rc.conf kld_list: $kl"
+fi
+
+# 2d. suspicious-looking character devices
+for n in /dev/sys_monitor /dev/rootkit /dev/rk /dev/rkx /dev/elevate_dev; do
+	[ -e "$n" ] && info "suspicious device node present: $n"
+done
+
+# ---------------------------------------------------------------------------
+# Verdict
+# ---------------------------------------------------------------------------
+log "=== verdict ==="
+if [ "$ROOTKIT" -eq 1 ]; then
+	log "RESULT: ROOTKIT DETECTED"
+	exit 1
+fi
+log "RESULT: no rootkit detected"
+exit 0
