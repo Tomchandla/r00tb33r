@@ -33,7 +33,11 @@ static const struct {
 	{ "sysent",    check_sysent },
 	{ "ip_protox", check_ip_protox },
 	{ "icmp_hook", check_icmp_hook },
+#ifndef CORE_ONLY
 	{ "inline",    check_inline },
+	{ "proc",      check_proc_hiding },
+	{ "bootcfg",   check_bootcfg },
+#endif
 };
 
 int main(void)

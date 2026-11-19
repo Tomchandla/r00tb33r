@@ -13,7 +13,7 @@
 
 static const char *const hot_funcs[] = {
 	"kern_fcntl", "kern_kill", "kern_execve", "kern_getdirentries",
-	"kern_openat", "kern_readv", "kern_writev", "kern_setuid",
+	"kern_openat", "kern_readv", "kern_writev",
 	"ttydisc_read", "ttydisc_write", "tty_ioctl", "sys_getdirentries",
 	"sys_kill", "sys_read", "sys_execve", "sys_exit", "sys_rmdir",
 	"tcp_input", "ip_input", "icmp_input", "linker_file_foreach",
