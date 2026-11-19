@@ -8,3 +8,10 @@ opt_global.h
 x86
 .clangd
 freebsd-src/
+
+# detector: local images, packaged tarballs, build output
+*.iso
+detect.tar
+detection.tar
+kcheck
+detector/kcheck
