@@ -4,7 +4,7 @@ cd $(dirname $0)
 
 # Compile remote-helper if doesn't exists
 if [ ! -e "./remote-helper" ]; then
-	cc src/remote-helper.c -o remote-helper
+	cc rootkit/remote-helper.c -o remote-helper
 fi
 
 ./remote-helper $1
