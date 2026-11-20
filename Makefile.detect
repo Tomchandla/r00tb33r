@@ -1,7 +1,8 @@
 SRC_DIR = detector
 SRCS    = ${SRC_DIR}/kcheck.c ${SRC_DIR}/kutil.c \
           ${SRC_DIR}/chk_sysent.c ${SRC_DIR}/chk_protox.c \
-          ${SRC_DIR}/chk_icmp_hook.c ${SRC_DIR}/chk_modlist.c
+          ${SRC_DIR}/chk_icmp_hook.c ${SRC_DIR}/chk_modlist.c \
+          ${SRC_DIR}/chk_inline.c 
 CFLAGS += -O2 -Wall
 
 all: kcheck

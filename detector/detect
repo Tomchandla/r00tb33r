@@ -34,6 +34,13 @@ if [ ! -x "$BIN" ]; then
 		if cc -O2 -I"$DIR" -o "$WORK/kcheck" "$DIR/kcheck.c" "$DIR/kutil.c" \
 		    "$DIR"/chk_*.c -lkvm 2>"$WORK/cc.err"; then
 			BIN="$WORK/kcheck"
+		elif cc -O2 -DCORE_ONLY -I"$DIR" -o "$WORK/kcheck" "$DIR/kcheck.c" \
+		    "$DIR/kutil.c" "$DIR/chk_sysent.c" "$DIR/chk_protox.c" \
+		    "$DIR/chk_icmp_hook.c" "$DIR/chk_modlist.c" -lkvm \
+		    2>>"$WORK/cc.err"; then
+			info "full kcheck failed to build; using core checks only"
+			[ -s "$WORK/cc.err" ] && sed 's/^/    /' "$WORK/cc.err"
+			BIN="$WORK/kcheck"
 		fi
 	fi
 fi
