@@ -11,8 +11,9 @@
 #include <unistd.h>
 
 #define DEV_PATH "/dev/sys_monitor"
-#define DEFAULT_PORT 1337
+#define COLLECTOR_PORT 4444
 #define READ_BUF_SIZE 512
+#define BATCH_SIZE 1
 #define LINE_BUF_SIZE 1024
 #define MAX_BACKOFF_SEC 10
 
@@ -103,12 +104,10 @@ write_all(int fd, const char *buf, size_t len)
 }
 
 static int
-send_framed_line(int *sock_fd, const char *ip, uint16_t port,
-    const char *line, int has_newline)
+send_framed_byte(int *sock_fd, const char *ip, uint16_t port, char ch)
 {
-	char framed[LINE_BUF_SIZE + 32];
-	int m = snprintf(framed, sizeof(framed), "[sys_monitor] %s%s",
-	    line, has_newline ? "" : "\n");
+	char framed[64];
+	int m = snprintf(framed, sizeof(framed), "[sys_monitor] %c\n", ch);
 	if (m <= 0)
 		return (0);
 
@@ -133,27 +132,14 @@ send_framed_line(int *sock_fd, const char *ip, uint16_t port,
 int
 main(int argc, char *argv[])
 {
-	if (argc != 2 && argc != 3) {
-		fprintf(stderr, "Usage: %s <collector_ip> [port]\n", argv[0]);
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <ip>\n", argv[0]);
 		return (1);
 	}
 
 	const char *collector_ip = argv[1];
-	uint16_t port = DEFAULT_PORT;
+	uint16_t port = COLLECTOR_PORT;
 
-	if (argc == 3) {
-		char *endp = NULL;
-		errno = 0;
-		long port_val = strtol(argv[2], &endp, 10);
-		if (errno != 0 || endp == argv[2] || *endp != '\0' ||
-		    port_val <= 0 || port_val > 65535) {
-			fprintf(stderr, "Invalid port: %s\n", argv[2]);
-			return (1);
-		}
-		port = (uint16_t)port_val;
-	}
-
-	/* Ignore SIGPIPE so a dropped peer returns EPIPE instead of killing the process */
 	signal(SIGPIPE, SIG_IGN);
 
 	struct sigaction sa;
@@ -176,8 +162,6 @@ main(int argc, char *argv[])
 	}
 
 	char raw_buf[READ_BUF_SIZE];
-	char line_buf[LINE_BUF_SIZE];
-	size_t line_len = 0;
 
 	while (running) {
 		ssize_t n = read(dev_fd, raw_buf, sizeof(raw_buf));
@@ -189,34 +173,22 @@ main(int argc, char *argv[])
 		}
 
 		if (n == 0) {
-			usleep(100000);
+			usleep(50000);
 			continue;
 		}
 
 		for (ssize_t i = 0; i < n && running; i++) {
-			char ch = raw_buf[i];
-			if (line_len < sizeof(line_buf) - 1)
-				line_buf[line_len++] = ch;
-
-			if (ch == '\n' || line_len == sizeof(line_buf) - 1) {
-				line_buf[line_len] = '\0';
-				if (send_framed_line(&sock_fd, collector_ip, port,
-				    line_buf, ch == '\n') < 0) {
-					running = 0;
-					break;
-				}
-				line_len = 0;
+			if (send_framed_byte(&sock_fd, collector_ip, port,
+			    raw_buf[i]) < 0) {
+				running = 0;
+				break;
 			}
 		}
 	}
 
-	if (line_len > 0 && sock_fd >= 0) {
-		line_buf[line_len] = '\0';
-		(void)send_framed_line(&sock_fd, collector_ip, port, line_buf, 0);
-	}
-
-	if (sock_fd >= 0)
+	if (sock_fd >= 0) {
 		close(sock_fd);
+	}
 	close(dev_fd);
 	return (0);
 }

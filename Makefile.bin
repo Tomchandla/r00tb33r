@@ -1,5 +1,5 @@
 SRC_DIR = rootkit
-TARGETS = elevate bhclient remote-helper spirit
+TARGETS = elevate bhclient remote-helper spirit log-helper
 
 .PATH.c: ${SRC_DIR}
 
