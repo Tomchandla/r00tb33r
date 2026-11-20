@@ -31,8 +31,6 @@ DESIGN JUSTIFICATIONS:
 We considered that this technique is realistic for the timeframe that we have.
 
 ## Detection
-
-<<<<<<< HEAD
 `detect` exits with `0` on a clean system and `1` when a rootkit is detected. 
 Because false positives are penalised, we prioritised surefire methods of rootkit 
 detection: a check only contributes to an exit `1` verdict when it is a near-certain
