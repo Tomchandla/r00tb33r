@@ -32,6 +32,29 @@ We considered that this technique is realistic for the timeframe that we have.
 
 ## Detection
 
+The detector exits with 0 on a clean system, and exits with 1 when a rootkit is detected. As false positives are penalised we prioritised surefire methods of rootkit detection.
+ 
+Our core design focuses on kernel function-pointer validation. After reading through each team's design specifications, we saw common methods in syscall hooks, ICMP hooks and sysctl hijacks. These all require changing a function pointer within the kernel dispatch table such that an unauthorised function is called instead of an approved kernel one. Thus, we check if the pointer lands inside the kernel's code or in a currently loaded module's code, in which it is legitimate. Any other location is deemed a sign of a rootkit.
+ 
+We do this by traversing the kldstat to make a module map, noting each loaded file's address and address+size range to see if it lies within the kernel itself. Then we allocate it to three categories:
+    1. Kernel Owned.
+    2. Owner hidden, where the pointer points outside the kldstat range. This is a sign of DKOM which unlinks itself from the loaded module list through a syscall hook.
+    3. Owner null, an empty pointer.
+ 
+kcheck is a userland program that reads kernel memory and performs a series of checks to determine if a rootkit is present.
+ 
+Then ten different checks are run:
+    1. sysent - syscall table hooks. We read the sysent array and identify every sy_call pointer and check if it points to legitimate kernel code as discussed before. This aims to find rootkits that hook syscalls to escalate and hide themselves.
+    2. ip_protox - IP protocol backdoors. Like sysent we traverse the ip_protox array and identify the suspicious handlers.
+    3. icmp_hook - ICMP handler redirection. We check whether ICMP packed are handled by the normal icmp_input function.
+    4. sysctl - sysctl handler hijack. Walk the sysctl tree instead of an array like the previous.
+    5. cdevsw - character-device backdoors. Inspect all character device driver operation handlers (like open, read and write). This targets keyloggers.
+    6. pfil - packet-filter hooks. Checks packet filtering hooks that link to hidden code.
+    7. inline - prologue patches. For rootkits that patch kernel code directly instead of the dispatch table.
+    8. modlist - DKOM module-list desync.
+    9. proc - DKOM process hiding.
+    10. bootcfg - persistence.
+
 ## Remote
 
 *New after midpoint
