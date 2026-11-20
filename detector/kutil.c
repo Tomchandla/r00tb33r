@@ -3,13 +3,11 @@
  */
 #include <sys/param.h>
 #include <sys/linker.h>
-
 #include <kvm.h>
 #include <nlist.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-
 #include "kutil.h"
 
 // Build the map of loaded files (kernel + modules) via the kldstat(2) API.
@@ -21,7 +19,7 @@ int build_module_map(struct modmap *m)
 	m->n = 0;
 	while ((f_id = kldnext(f_id)) > 0) {
 		if (m->n >= MAXMODS) {
-			report_warn("more than %d linker files; map truncated",
+			report_err("warn: more than %d linker files; map truncated",
 			    MAXMODS);
 			break;
 		}
@@ -32,18 +30,16 @@ int build_module_map(struct modmap *m)
 		strlcpy(m->mods[m->n].name, st.name, sizeof(m->mods[m->n].name));
 		m->mods[m->n].start = (uintptr_t)st.address;
 		m->mods[m->n].end   = (uintptr_t)st.address + st.size;
-		/* The base kernel file is named "kernel". */
 		m->mods[m->n].is_kernel = (strcmp(st.name, "kernel") == 0);
 		m->n++;
 	}
 	return (m->n > 0 ? 0 : -1);
 }
 
-/* Returns the index into m->mods[] that owns p, OWNER_HIDDEN, or OWNER_NULL. */
+// Returns index in m->mods[] that owns p, OWNER_HIDDEN, or OWNER_NULL
 int classify(const struct modmap *m, uintptr_t p)
 {
 	int i;
-
 	if (p == 0)
 		return (OWNER_NULL);
 	for (i = 0; i < m->n; i++)
@@ -57,7 +53,6 @@ int owner_is_kernel(const struct modmap *m, int owner)
 	return (owner >= 0 && m->mods[owner].is_kernel);
 }
 
-/* Resolve one symbol address; returns 0 on success. */
 int resolve(kvm_t *kd, const char *sym, uintptr_t *out)
 {
 	struct nlist nl[2];
@@ -84,15 +79,6 @@ void report_hook(const char *fmt, ...)
 
 	va_start(ap, fmt);
 	vreport(stdout, "[HOOK]", fmt, ap);
-	va_end(ap);
-}
-
-void report_warn(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	vreport(stdout, "[WARN]", fmt, ap);
 	va_end(ap);
 }
 
