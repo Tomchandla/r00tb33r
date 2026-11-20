@@ -71,20 +71,16 @@ For the remote functionality, we chose to hook the ICMP handler as we don't have
 
 ## Keylogger
 
-*New after midpoint
+Our keylogger captures stdin on the target through a KLD and streams those bytes over TCP to a collector/listener (./log <IP>) running on $REMOTE. The kernel module hooks SYS_read and filters for stdin so normal interactive shell input is captured while prompts reading directly from /dev/tty (such as password prompts) are excluded—avoiding the extra detection surface that hooking /dev/tty or broader I/O paths would introduce. We also didn't implement this due to time constraints.
 
-The logger captures stdin read activity on the FreeBSD target ($TARGET) via a kld and streams those bytes over TCP to a collector/listener ($REMOTE) via a user-space helper (log-helper) invoked through the ./log <IP> wrapper. The module hooks SYS_read and specifically targets stdin so only normal shell input is captured while prompts that read directly from /dev/tty such as passwords and stuff are not captured - this could have been done but it would also open up another detection avenue that we would have to consider.
+Synchronized Ring Buffer: Bytes copied from user space via copyin() are pushed into ring_buffer under a kernel mutex (ring_mtx). When the buffer is full, incoming bytes are dropped rather than overwriting unread data or overflowing the buffer. monitor_cdevsw serves the buffered data to user space: monitor_read() drains ring_buffer into a staging buffer while holding ring_mtx, then transfers data to user space via uiomove() after releasing the lock so it never sleeps or faults while holding the mutex.
 
-Synchronized Ring Buffer: Bytes copied from user space via copyin() are pushed into the ring_buffer protected by a kernel mutex. When the ring buffer reaches capacity (next_head == tail), additional incoming bytes are dropped rather than overwriting unread data or overflowing the buffer. A character device (monitor_cdevsw) exposes the buffered bytes to user space. monitor_read() drains ring_buffer into a staging buffer under ring_mtx and transfers data to user space via uiomove() outside the lock so it does not sleep or fault while holding the mutex.
-
-Because read_hook only fires when a process executes read(fd = 0), ./log <IP> is run in the background (./log <IP> &) or in a separate session so the interactive shell remains active and issues read(fd = 0) calls as commands and characters are typed. This is useful for testing.
-
-log-helper opens /dev/sys_monitor (O_RDONLY), connects over TCP to the collector port (4444) with exponential backoff retry and automatic reconnection if the socket drops, and forwards read bytes (byte-by-byte or in configured batches) to the listener.
+On $TARGET, /sbin/log opens /dev/sys_monitor, connects outbound over TCP to port 4444 (10.0.2.2:4444 under QEMU user-mode networking, and will retry on failure by reconnecting if the socket drops), and forwards [sys_monitor] bytes to the listener. On $REMOTE, ./log <IP> binds TCP port 4444, accepts incoming connections, and writes received bytes to stdout.
 
 ### Testing Notes
 
-Because read_hook only triggers when a process executes read(fd = 0), running ./log <IP> & in the background—or running ./log <IP> in a separate session/SSH window—keeps the interactive shell active so typing commands and characters issues read(fd = 0) calls that flow through /dev/sys_monitor to the listener.
+Start ./log 127.0.0.1 (or ./log 0.0.0.0) on $REMOTE so it is listening on port 4444. Note that the first character typed into QEMU once the connection is established may be missed—typing that initial character triggers/completes the connection path before subsequent stdin reads stream through cleanly.
 
 ### Video
 
-Here you can access a video of our keylogger [keyloggerexamplevideo](https://unsw-my.sharepoint.com/:v:/g/personal/z5479498_ad_unsw_edu_au/IQDCpq4GZL_EQJ0vRCJEZK39AbhFxIYRrnVDTFxg6awkqPc?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D&e=6OrF3k)
+Here you can access a video of our keylogger [keyloggerexamplevideo](https://unsw-my.sharepoint.com/:v:/g/personal/z5479498_ad_unsw_edu_au/IQCIgvlaQW5yTK6CTDq4vyO2ASx2TFb6URFLjao2ejlRum4?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJTdHJlYW1XZWJBcHAiLCJyZWZlcnJhbFZpZXciOiJTaGFyZURpYWxvZy1MaW5rIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXcifX0%3D&e=zRmkqF)

