@@ -34,6 +34,9 @@ static const struct {
 	{ "ip_protox", check_ip_protox },
 	{ "icmp_hook", check_icmp_hook },
 #ifndef CORE_ONLY
+	{ "sysctl",    check_sysctl },
+	{ "cdevsw",    check_cdevsw },
+	{ "pfil",      check_pfil },
 	{ "inline",    check_inline },
 	{ "proc",      check_proc_hiding },
 	{ "bootcfg",   check_bootcfg },
@@ -68,7 +71,7 @@ int main(void)
 	kvm_close(kd);
 
 	if (findings > 0) {
-		printf("[kcheck] RESULT: %d hard finding(s) -> rootkit\n",
+		printf("[kcheck] RESULT: %d finding(s) -> rootkit\n",
 		    findings);
 		return (1);
 	}

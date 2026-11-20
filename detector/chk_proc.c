@@ -1,20 +1,3 @@
-/*
- * chk_proc.c - detect processes hidden by DKOM (allproc / pidhashtbl unlink).
- *
- * A process lives in several independent kernel structures:
- *   allproc    - list walked by ps/top/sysctl kern.proc  (p_list)
- *   pidhashtbl - pid lookup used by kill/ps -p            (p_hash)
- *   the process tree, rooted at proc0 via p_children      (p_sibling)
- *
- * Rootkits that hide a process unlink it from allproc and/or pidhashtbl.
- * They typically leave the parent's children list alone. So any process we
- * can reach through the tree or the pid hash but that is absent from allproc
- * is hidden. Findings must persist across several full snapshots so that
- * processes forking/exiting during the walk do not cause false positives.
- *
- * Uses the real struct proc from <sys/proc.h> (as libkvm does), so offsets
- * always match the running release.
- */
 #include <sys/param.h>
 #define _WANT_UCRED
 #include <sys/ucred.h>
@@ -25,7 +8,6 @@
 #include <sys/cpuset.h>
 #include <sys/user.h>
 #include <sys/proc.h>
-
 #include <kvm.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -33,7 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
 #include "kutil.h"
 
 #define PR_TRIES    3
@@ -48,7 +29,7 @@ struct pent {
 
 struct pset {
 	struct pent *v;
-	size_t       n, cap;
+	size_t n, cap;
 };
 
 static int pset_add(struct pset *s, uintptr_t addr, const struct proc *p)

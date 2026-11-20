@@ -1,15 +1,6 @@
-/*
- * chk_protox.c - validate the IP protocol input demux table ip_protox[].
- *
- * Any entry pointing outside the base kernel is a HARD finding.
- * IPPROTO_ICMP is skipped here: chk_icmp_hook.c checks it with a stricter
- * exact match against icmp_input.
- */
 #include <sys/param.h>
 #include <netinet/in.h>
-
 #include <kvm.h>
-
 #include "kutil.h"
 
 int check_ip_protox(kvm_t *kd, const struct modmap *m)
@@ -32,7 +23,7 @@ int check_ip_protox(kvm_t *kd, const struct modmap *m)
 		uintptr_t p = (uintptr_t)ptrs[i];
 
 		if (i == IPPROTO_ICMP)
-			continue;       /* owned by chk_icmp_hook.c */
+			continue; //already checked in different file
 		owner = classify(m, p);
 		if (owner == OWNER_NULL || owner_is_kernel(m, owner))
 			continue;

@@ -2,14 +2,12 @@
 #include <sys/linker.h>
 #include <sys/module.h>
 #include <sys/stat.h>
-
 #include <ctype.h>
 #include <glob.h>
 #include <kvm.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "kutil.h"
 
 #define MAXITEMS 128
@@ -231,9 +229,6 @@ int check_bootcfg(kvm_t *kd, const struct modmap *m)
 			    "present at %s but is not loaded or visible: hidden "
 			    "module (rootkit)", it->name, it->src, path);
 			findings++;
-		} else {
-			report_warn("'%s' configured in %s (%s) is not "
-			    "loaded", it->name, it->src, path);
 		}
 	}
 	return (findings);

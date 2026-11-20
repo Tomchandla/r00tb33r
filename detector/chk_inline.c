@@ -1,12 +1,10 @@
 #include <sys/param.h>
 #include <sys/sysent.h>
 #include <sys/syscall.h>
-
 #include <kvm.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
 #include "kutil.h"
 
 #define PROLOGUE_LEN 24
