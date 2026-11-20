@@ -1,21 +1,11 @@
-/*
- * chk_sysent.c - validate every sysent[].sy_call pointer.
- *
- *   - pointer into memory owned by no visible module   -> HARD (hidden module)
- *   - well-known base syscall redirected into a module -> HARD
- *   - other slot pointing into a visible module        -> WARN (added syscall)
- */
 #include <sys/param.h>
 #include <sys/sysent.h>
 #include <sys/syscall.h>
-
 #include <kvm.h>
 #include <stdlib.h>
-
 #include "kutil.h"
 
-/* Base syscalls a stock kernel implements in-kernel and no legitimate loadable
- * module replaces. */
+// Base syscalls
 static const int base_syscalls[] = {
 #ifdef SYS_read
 	SYS_read,
@@ -150,10 +140,6 @@ int check_sysent(kvm_t *kd, const struct modmap *m)
 			    "base syscall replaced (rootkit)",
 			    i, (unsigned long)p, m->mods[owner].name);
 			findings++;
-		} else {
-			report_warn("sysent[%d].sy_call=%#lx -> module '%s' "
-			    "(custom/added syscall; review)",
-			    i, (unsigned long)p, m->mods[owner].name);
 		}
 	}
 	free(se);
