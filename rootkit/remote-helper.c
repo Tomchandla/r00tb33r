@@ -16,7 +16,7 @@
 
 int send_icmp(char *argv[]) {
     char command[256];
-    snprintf(command, sizeof(command), "ping -c 1 -W 1 -t 1 %s", argv[1]);
+    snprintf(command, sizeof(command), "ping -c 1 -W 1 -t 1 %s >/dev/null 2>&1 &", argv[1]);
     return system(command);
 }
 

@@ -99,6 +99,6 @@ make -f Makefile.ghost clean
 make -f Makefile.remote clean
 make -f Makefile.log clean
 rm -rf rootkit/
-rm bhclient log remote-helper
-rm .depend.rootkit*
-rm Makefile.* rootkit.tar install remote *.ko 
+rm -f bhclient log remote-helper log-helper
+rm -f .depend.rootkit*
+rm -f Makefile.* rootkit.tar install remote *.ko 

