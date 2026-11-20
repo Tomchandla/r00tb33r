@@ -1,7 +1,10 @@
-KMOD=log
-SRCS=rootkit/log-kld.c
+KMOD=	log
+SRCS=	log-kld.c
 
-CFLAGS+=-DREMOTE='"${REMOTE}"'
+.PATH:	${.CURDIR}/rootkit
+
+.if defined(REMOTE) && !empty(REMOTE)
+CFLAGS+=	-DREMOTE='"${REMOTE}"'
+.endif
 
 .include <bsd.kmod.mk>
-
